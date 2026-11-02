@@ -1,0 +1,64 @@
+services:
+  # 1. PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: reminder-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: reminderdb
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  # 2. Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: reminder-redis
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+  # 3. .NET 10 API
+  api:
+    build:
+      context: ./ReminderApp.Api
+      dockerfile: Dockerfile
+    container_name: reminder-api
+    restart: always
+    depends_on:
+      - postgres
+      - redis
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_HTTP_PORTS=8080
+      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=reminderdb;Username=postgres;Password=password
+      - ConnectionStrings__Redis=redis:6379
+      - Jwt__Key=ThisIsASecretKeyForJwtTokenGenerationMinimum32BytesLong!
+      - Jwt__Issuer=ReminderAppApi
+      - Jwt__Audience=ReminderAppClient
+    ports:
+      - "5000:8080"
+    volumes:
+      - api_uploads:/app/wwwroot/uploads
+
+  # 4. React Client (Vite + Nginx)
+  client:
+    build:
+      context: ./reminder-client
+      dockerfile: Dockerfile
+    container_name: reminder-client
+    restart: always
+    depends_on:
+      - api
+    ports:
+      - "3000:80"
+
+volumes:
+  postgres_data:
+  redis_data:
+  api_uploads:

@@ -1,0 +1,47 @@
+@baseUrl = https://localhost:44399
+
+### 1. Login to get a fresh Access Token
+# @name login
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "identifier": "7095834571",
+  "password": "Password123!"
+}
+
+### Store the token from response
+@authToken = {{login.response.body.accessToken}}
+
+### 2. Create a Bill (EMI / Credit Card)
+POST {{baseUrl}}/api/bills
+Content-Type: application/json
+Authorization: Bearer {{authToken}}
+
+{
+  "title": "HDFC Credit Card Bill",
+  "category": 1,
+  "amount": 4500.50,
+  "dueDate": "2026-11-15"
+}
+
+### 3. Get All Bills for Current User
+GET {{baseUrl}}/api/bills
+Authorization: Bearer {{authToken}}
+
+### 4. Create a Warranty Item
+POST {{baseUrl}}/api/warranties
+Content-Type: application/json
+Authorization: Bearer {{authToken}}
+
+{
+  "itemName": "Samsung Galaxy S24",
+  "category": "Electronics",
+  "purchaseDate": "2026-01-10",
+  "expiryDate": "2027-01-10",
+  "notes": "1-year manufacturer warranty"
+}
+
+### 5. Get All Warranties for Current User
+GET {{baseUrl}}/api/warranties
+Authorization: Bearer {{authToken}}
